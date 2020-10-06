@@ -50,6 +50,12 @@ class Building:
     def __str__(self):
         return "name: {} / apartment_count: {} / distance:  {}m / apartments: {}".format(self.name, self.apartments_count, self.distance, [str(apartment) for apartment in self.apartments])
 
+    def find_apartment(self, ap_nr: int):
+        for a in self.apartments:
+            if a.apartment_number == ap_nr:
+                return a
+        
+        return None
 
 class BuildingSchema(Schema):
     name = fields.Str(required=True)
@@ -81,6 +87,13 @@ class Neighborhood():
     def __str__(self):
         return "name: {} / apartments_height: {} / buildings: {}".format(self.name, self.apartments_height, [str(building) for building in self.buildings])
 
+    def find_building(self, name: str):
+        for b in self.buildings:
+            if b.name == name:
+                return b
+        
+        return None
+        
 
     def get_distance_between_buildings(self, building1: Building, building2: Building):
         distance = 0
@@ -106,6 +119,8 @@ class Neighborhood():
 
         distance = self.get_distance_between_buildings(target_building, source_building)
 
+        print(distance)
+
         tg = rel_building_height / distance
 
         return math.atan(tg)
@@ -124,11 +139,11 @@ class Neighborhood():
                 continue
 
             if left:
-                angle = get_angle_between_apartment_and_building(apartment, b, building)
+                angle = self.get_angle_between_apartment_and_building(apartment, b, building)
                 if angle > left_cover_angle:
                     left_cover_angle = angle
             else:
-                angle = get_angle_between_apartment_and_building(apartment, b, building)
+                angle = self.get_angle_between_apartment_and_building(apartment, b, building)
                 if angle > right_cover_angle:
                     right_cover_angle = angle
 
@@ -168,6 +183,12 @@ class NeighborhoodSchema(Schema):
 # sunset_hour = 17:25
 city = []
 
+def find_neighborhood(neighborhood_name):
+    for neighborhood in city:
+        if neighborhood.name == neighborhood_name:
+            return neighborhood
+    return None
+
 
 
 class CityController(Resource):
@@ -194,13 +215,13 @@ class SunlightController(Resource):
 
 
     def getSunlightHours(self, neighborhood_name, building_name, apartment_number):
-        neighborhood = Neighborhood.find(neighborhood_name)
+        neighborhood = find_neighborhood(neighborhood_name)
         if not neighborhood:
             abort("Wrong name of neighborhood")
-        building = Building.find(building_name)
+        building = neighborhood.find_building(building_name)
         if not building:
             abort("Wrong building name")
-        apartment = Apartment.find(apartment_number)
+        apartment = building.find_apartment(apartment_number)
         if not apartment:
             abort("Wrong apartment number")
         sunlight_start, sunlight_stop = apartment.get_sunlight_hours() if all(apartment.get_sunlight_hours()) else neighborhood.compute_sunlight_hours(building, apartment)
