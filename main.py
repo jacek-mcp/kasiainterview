@@ -73,6 +73,11 @@ class Neighborhood():
 
         self.buildings = buildings
 
+        self.day_length = 9.183 #hours
+        sunrise_hour = 8.2333
+        sunset_hour = 17.4166
+
+
     def __str__(self):
         return "name: {} / apartments_height: {} / buildings: {}".format(self.name, self.apartments_height, [str(building) for building in self.buildings])
 
@@ -108,16 +113,40 @@ class Neighborhood():
 
 
     def compute_sunlight_hours(self, building: Building, apartment: Apartment):
-        left_radial_higher_building = 20
-        right_radial_higher_building = 10
+        left_cover_angle = 0
+        right_cover_angle = 0
 
+        left = True
 
+        for b in self.buildings:
+            if b.name == building.name:
+                left = False
+                continue
+
+            if left:
+                angle = get_angle_between_apartment_and_building(apartment, b, building)
+                if angle > left_cover_angle:
+                    left_cover_angle = angle
+            else:
+                angle = get_angle_between_apartment_and_building(apartment, b, building)
+                if angle > right_cover_angle:
+                    right_cover_angle = angle
+
+        
+        sunrise_delay = (left_cover_angle * self.day_length) / 180 # [hour]
+        sunset_acc = (right * self.day_length) / 180 # [hour]
+        
+        sunrise_delay_h = math.floor(sunrise_delay)
+        sunrise_delay_m = sunrise_delay - sunrise_delay_h
+
+        sunset_acc_h = math.floor(sunset_acc)
+        sunset_acc_m = sunset_acc - sunset_acc_h
 
 
 
         # TODO tutaj liczenie tych godzin!
-        sunlight_start = 13.15
-        sunlight_stop = 18.29
+        sunlight_start = self.sunrise_hour + sunrise_delay
+        sunlight_stop = self.sunset_hour - sunset_acc
         apartment.set_sunlight_hours(sunlight_start, sunlight_stop)
         return apartment.get_sunlight_hours()
 
